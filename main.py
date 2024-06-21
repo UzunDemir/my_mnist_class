@@ -2,64 +2,87 @@ import streamlit as st
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+import matplotlib.pyplot as plt
 
 # Загрузка предобученной модели
 model = tf.keras.models.load_model('mnist_cnn_model.h5')
 
-# Функция для предобработки изображения по пути к файлу
-def preprocess_image_from_path(image_path):
-    img = Image.open(image_path)
+# Функция для предобработки загруженного изображения
+def preprocess_image(image):
+    img = Image.open(image)
     img = img.convert('L')  # Преобразование в grayscale
     img = img.resize((28, 28))  # Изменение размера до 28x28
     img_array = np.array(img) / 255.0  # Преобразование в массив и нормализация
     img_array = img_array.reshape((1, 28, 28, 1))  # Изменение формы для модели CNN
     return img, img_array
 
-# Заголовок для Streamlit приложения
+# Streamlit приложение
 st.title('Классификатор рукописных цифр MNIST')
 
-# Загрузка изображения с помощью виджета file_uploader
-uploaded_file = st.file_uploader("Загрузите изображение цифры (формат MNIST)", type=["jpg", "jpeg", "png"])
+uploaded_image = st.file_uploader("Загрузите изображение цифры (формат MNIST)", type=["jpg", "jpeg", "png"])
 
-if uploaded_file is not None:
+if uploaded_image is not None:
     try:
         # Предобработка загруженного изображения
-        user_image, img_array = preprocess_image_from_path(uploaded_file)
+        user_image, img_array = preprocess_image(uploaded_image)
+# if uploaded_image is not None:
+#             # Preprocessed the data like the example
+#             user_image = Image.open(uploaded_image)
+#             fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(10, 6))
 
-        # Отображение предобработанных изображений с помощью Streamlit
-        st.subheader("Исходное изображение")
-        st.image(user_image, caption='Исходное изображение', use_column_width=True, clamp=True)
+        # Отображение обработанных изображений с помощью Matplotlib
+        fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(10, 6))
+
+        # Скрытие меток осей для всех подграфиков
+        for axis in ax.flat:
+            axis.set_xticks([])
+            axis.set_yticks([])
+
+        # Исходное изображение
+        ax[0, 0].set_title("Original Image")
+        ax[0, 0].imshow(user_image)
+        # ax[0, 0].set_title("Исходное изображение")
+        # ax[0, 0].imshow(user_image, cmap='gray')  # Используем cmap='gray' для grayscale изображений
 
         # Измененное изображение (28 * 28)
         resized_image = user_image.resize((28, 28))
-        st.subheader("Измененное изображение (28x28)")
-        st.image(resized_image, caption='Измененное изображение (28x28)', use_column_width=True, clamp=True)
+        ax[0, 1].set_title("Измененное изображение")
+        ax[0, 1].imshow(resized_image, cmap='gray')
 
         # Grayscale изображение
         grayscaled_image = resized_image.convert("L")
-        st.subheader("Grayscale изображение")
-        st.image(grayscaled_image, caption='Grayscale изображение', use_column_width=True, clamp=True)
+        ax[0, 2].set_title("Grayscale изображение")
+        ax[0, 2].imshow(grayscaled_image, cmap="gray")
 
         # Инвертированное изображение (текст белый, фон черный)
         inverted_image = 255 - np.array(grayscaled_image)
-        st.subheader("Инвертированное изображение")
-        st.image(inverted_image, caption='Инвертированное изображение', use_column_width=True, clamp=True)
+        ax[1, 0].set_title("Инвертированное изображение")
+        ax[1, 0].imshow(inverted_image, cmap="gray")
 
         # Нормализованное изображение (делим на 255, чтобы значения были от 0 до 1)
         normalized_image = inverted_image / 255.0
-        st.subheader("Нормализованное изображение")
-        st.image(normalized_image, caption='Нормализованное изображение', use_column_width=True, clamp=True)
+        ax[1, 1].set_title("Нормализованное изображение")
+        ax[1, 1].imshow(normalized_image, cmap="gray")
 
-        # Измененная форма изображения
+        # Измененное форма изображение
         reshaped_image = normalized_image.reshape((28, 28))
-        st.subheader("Измененная форма изображения")
-        st.image(reshaped_image, caption='Измененная форма изображения', use_column_width=True, clamp=True)
+        ax[1, 2].set_title("Измененная форма изображения")
+        ax[1, 2].imshow(reshaped_image, cmap="gray")
+
+        st.pyplot(fig)
 
         # Предсказание с использованием предобученной модели
         result = model.predict(img_array)
         predicted_class = np.argmax(result)
 
-        st.success(f'Предсказанная цифра: {predicted_class}')
+        st.success(f'Предсказанная цифра: {predicted_class.tolist()[0]}')
+
+        # predicted_label = model.predict(reshaped_image)
+        # predicted_label = predicted_label.argmax(axis=1)
+
+        #     # st.subheader(f"True Value: {true_label}")
+        # st.subheader(f"Predicted Value: {predicted_label.tolist()[0]}")
 
     except Exception as e:
         st.error(f'Ошибка: {e}')
+# ggg
