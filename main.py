@@ -1,32 +1,39 @@
+# app.py
+import streamlit as st
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model
-from PIL import Image
 
-# Загрузка модели
-model = load_model('mnist_cnn_mod.h5')
+# Загрузка обученной модели
+model = tf.keras.models.load_model('mnist_cnn_model.h5')
 
-# Функция для предобработки изображения
-def preprocess_image(image_path):
-    img = Image.open(image_path)
-    img = img.resize((28, 28))
-    img = img.convert('L')  # Преобразование в оттенки серого
-    img_array = np.array(img) / 255.0  # Нормализация
-    img_array = img_array.reshape((1, 28, 28, 1))  # Добавление размерности канала
-    return img_array
+# Функция для предсказания с помощью модели
+def predict(image):
+    # Предобработка изображения (нормализация и изменение размера)
+    img = np.reshape(image.astype(np.float32) / 255.0, (1, 28, 28, 1))
+    # Предсказание класса
+    prediction = model.predict(img)
+    # Возвращаем предсказанный класс (цифру от 0 до 9)
+    return np.argmax(prediction)
 
-# Функция для загрузки и предсказания
-def predict_digit(image_path):
-    img_array = preprocess_image(image_path)
+# Основной код Streamlit
+def main():
+    st.title('Распознавание рукописных цифр (MNIST)')
     
-    # Предсказание класса с использованием модели
-    prediction = model.predict(img_array)
-    predicted_class = np.argmax(prediction)
+    # Заголовок и описание
+    st.markdown('Загрузите изображение рукописной цифры (черно-белое, 28x28 пикселей)')
     
-    return predicted_class
+    # Загрузка изображения
+    uploaded_file = st.file_uploader("Выберите изображение...", type=["jpg", "png", "jpeg"])
 
-# Пример использования
-image_path = 'images.png'  # Укажите путь к вашему изображению с цифрой
-predicted_digit = predict_digit(image_path)
-print(f'Predicted Digit: {predicted_digit}')
+    if uploaded_file is not None:
+        # Отображение изображения
+        image = np.array(Image.open(uploaded_file))
+        st.image(image, caption='Загруженное изображение', use_column_width=True)
+        
+        # Предсказание по загруженному изображению
+        prediction = predict(image)
+        
+        st.success(f'Предсказанная цифра: {prediction}')
 
+if __name__ == '__main__':
+    main()
