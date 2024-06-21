@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 import cv2
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import math
 from PIL import Image
 
