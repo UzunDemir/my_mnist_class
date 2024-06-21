@@ -24,7 +24,11 @@ def shift(img, sx, sy):
     return shifted
 
 def preprocess_image(img):
-    gray = 255 - img
+    # Конвертация в оттенки серого
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Инверсия цветов (черные пиксели на белом фоне)
+    gray = 255 - gray
+    # Пороговая обработка
     (thresh, gray) = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
     while np.sum(gray[0]) == 0:
