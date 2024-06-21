@@ -29,3 +29,4 @@ def predict_digit(image_path):
 image_path = 'images.png'  # Укажите путь к вашему изображению с цифрой
 predicted_digit = predict_digit(image_path)
 print(f'Predicted Digit: {predicted_digit}')
+
