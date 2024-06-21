@@ -1,29 +1,36 @@
+import streamlit as st
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 import cv2
-from scipy.ndimage.measurements import center_of_mass
 import math
-import matplotlib.pyplot as plt
+from PIL import Image
 
-# Загрузка модели
+# Load the pre-trained CNN model for MNIST digits
 model = load_model('mnist_cnn_model.h5')
 
-def getBestShift(img):
-    cy, cx = center_of_mass(img)
+def calculate_center_of_mass(img):
+    # Function to calculate center of mass of a grayscale image
     rows, cols = img.shape
-    shiftx = np.round(cols / 2.0 - cx).astype(int)
-    shifty = np.round(rows / 2.0 - cy).astype(int)
-    return shiftx, shifty
+    total_mass = np.sum(img)
+    if total_mass == 0:
+        return cols // 2, rows // 2  # Return center if no mass found
 
-def shift(img, sx, sy):
-    rows, cols = img.shape
-    M = np.float32([[1, 0, sx], [0, 1, sy]])
-    shifted = cv2.warpAffine(img, M, (cols, rows))
-    return shifted
+    cy = np.sum(np.arange(rows).reshape(-1, 1) * img) / total_mass
+    cx = np.sum(np.arange(cols).reshape(1, -1) * img) / total_mass
 
-def rec_digit(img_path):
-    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    return int(cx), int(cy)
+
+def preprocess_image(image):
+    # Function to preprocess the uploaded image
+    img = np.array(image.convert('L'))  # Convert to grayscale numpy array
+    img = cv2.resize(img, (28, 28))  # Resize to 28x28
+    img = img / 255.0  # Normalize to [0, 1]
+    img = img.reshape((1, 28, 28, 1))  # Reshape for model input
+    return img
+
+def rec_digit(img):
+    # Function to recognize the digit from preprocessed image
     gray = 255 - img
     (thresh, gray) = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
@@ -53,18 +60,27 @@ def rec_digit(img_path):
     rowsPadding = (int(math.ceil((28 - rows) / 2.0)), int(math.floor((28 - rows) / 2.0)))
     gray = np.lib.pad(gray, (rowsPadding, colsPadding), 'constant')
 
-    shiftx, shifty = getBestShift(gray)
-    shifted = shift(gray, shiftx, shifty)
-    gray = shifted
+    shiftx, shifty = calculate_center_of_mass(gray)
+    shifted = np.roll(gray, shiftx, axis=1)
+    gray = np.roll(shifted, shifty, axis=0)
 
-    img = gray / 255.0
-    img = np.array(img).reshape(-1, 28, 28, 1)
-    out = str(np.argmax(model.predict(img)))
+    gray = gray.reshape(-1, 28, 28, 1)  # Reshape for model input
+    out = str(np.argmax(model.predict(gray)))  # Predict the digit
     return out
 
-# Пример использования функции для распознавания цифр
-image_path = 'path_to_your_image.jpg'  # Укажите путь к вашему изображению с цифрой
+# Streamlit App
+st.title('MNIST Digit Recognizer')
 
-# Распознавание цифры
-predicted_digit = rec_digit(image_path)
-print(f'Predicted Digit: {predicted_digit}')
+uploaded_image = st.file_uploader("Upload an MNIST digit image", type=["jpg", "jpeg", "png"])
+
+if uploaded_image is not None:
+    # Read image
+    image = Image.open(uploaded_image).convert('L')
+    
+    # Display image
+    st.image(image, caption='Uploaded Image', use_column_width=True)
+    
+    if st.button('Classify'):
+        # Preprocess and predict
+        prediction = rec_digit(np.array(image))
+        st.success(f'Prediction: {prediction}')
