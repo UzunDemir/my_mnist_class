@@ -72,10 +72,16 @@ if uploaded_image is not None:
         st.pyplot(fig)
 
         # Предсказание с использованием предобученной модели
-        result = model.predict(img_array)
-        predicted_class = np.argmax(result)
+        # result = model.predict(img_array)
+        # predicted_class = np.argmax(result)
 
-        st.success(f'Предсказанная цифра: {predicted_class}')
+        # st.success(f'Предсказанная цифра: {predicted_class}')
+
+        predicted_label = model.predict(reshaped_image)
+        predicted_label = predicted_label.argmax(axis=1)
+
+            # st.subheader(f"True Value: {true_label}")
+        st.subheader(f"Predicted Value: {predicted_label.tolist()[0]}")
 
     except Exception as e:
         st.error(f'Ошибка: {e}')
