@@ -65,11 +65,23 @@ if uploaded_image is not None:
 
         st.pyplot(fig)
 
-        # Make a prediction using the pre-trained model
-        result = model.predict(img_array)
-        predicted_class = np.argmax(result)
+        # # Make a prediction using the pre-trained model
+        # result = model.predict(img_array)
+        # predicted_class = np.argmax(result)
 
-        st.success(f'Predicted Digit: {predicted_class}')
+        # st.success(f'Predicted Digit: {predicted_class}')
+        # The actual data we're going to use
+        reshaped_image = normalized_image.reshape((1, 28 * 28))
+
+        # true_label = st.selectbox(
+        #     "What digit does your image represent?", [i for i in range(10)]
+        # )
+        predicted_label = model.predict(reshaped_image)
+        predicted_label = predicted_label.argmax(axis=1)
+
+        # st.subheader(f"True Value: {true_label}")
+        st.subheader(f"Predicted Value: {predicted_label.tolist()[0]}")
+        st.divider()
         
     except Exception as e:
         st.error(f'Error: {e}')
