@@ -6,13 +6,13 @@ from PIL import Image
 # Load the pre-trained model
 model = tf.keras.models.load_model('mnist_cnn_model.h5')
 
-
+# Function to preprocess the uploaded image
 def preprocess_image(image):
     img = Image.open(image)
-    img = img.convert('L')  # Преобразование в grayscale
-    img = img.resize((28, 28))  # Изменение размера до 28x28
-    img_array = np.array(img) / 255.0  # Преобразование в массив и нормализация
-    img_array = img_array.reshape((1, 28, 28, 1))  # Изменение формы для модели CNN
+    img = img.convert('L')  # Convert to grayscale
+    img = img.resize((28, 28))  # Resize to 28x28
+    img_array = np.array(img) / 255.0  # Convert to numpy array and normalize
+    img_array = img_array.reshape((1, 28, 28, 1))  # Reshape for CNN model
     return img_array
 
 # Streamlit App
