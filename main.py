@@ -1,52 +1,70 @@
-import streamlit as st
 import numpy as np
 import tensorflow as tf
-from PIL import Image
+from tensorflow.keras.models import load_model
+import cv2
+from scipy.ndimage.measurements import center_of_mass
+import math
+import matplotlib.pyplot as plt
 
-# Load the pre-trained model
-model = tf.keras.models.load_model('mnist_cnn_model.h5')
+# Загрузка модели
+model = load_model('mnist_cnn_model.h5')
 
-# Function to preprocess the uploaded image
-# def preprocess_image(image):
-#     img = Image.open(image)
-#     img = img.resize((28, 28))
-#     img_array = np.array(img) / 255.0
-#     img_array = img_array.reshape((1, 28, 28, 1))
-#     return img_array
-# Function to preprocess the uploaded image
-def preprocess_image(image):
-    img = Image.open(image)
-    img = img.convert('L')  # Convert to grayscale
-    img = img.resize((28, 28))
-    img_array = np.array(img) / 255.0
-    img_array = img_array.reshape((1, 28, 28, 1))
-    return img_array
+def getBestShift(img):
+    cy, cx = center_of_mass(img)
+    rows, cols = img.shape
+    shiftx = np.round(cols / 2.0 - cx).astype(int)
+    shifty = np.round(rows / 2.0 - cy).astype(int)
+    return shiftx, shifty
 
+def shift(img, sx, sy):
+    rows, cols = img.shape
+    M = np.float32([[1, 0, sx], [0, 1, sy]])
+    shifted = cv2.warpAffine(img, M, (cols, rows))
+    return shifted
 
-# Streamlit App
-st.title('MNIST Digit Classifier')
+def rec_digit(img_path):
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    gray = 255 - img
+    (thresh, gray) = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
-uploaded_image = st.file_uploader("Upload a digit image (MNIST format)", type=["jpg", "jpeg", "png"])
+    while np.sum(gray[0]) == 0:
+        gray = gray[1:]
+    while np.sum(gray[:, 0]) == 0:
+        gray = np.delete(gray, 0, 1)
+    while np.sum(gray[-1]) == 0:
+        gray = gray[:-1]
+    while np.sum(gray[:, -1]) == 0:
+        gray = np.delete(gray, -1, 1)
+    
+    rows, cols = gray.shape
 
-if uploaded_image is not None:
-    image = Image.open(uploaded_image)
-    col1, col2 = st.columns(2)
+    if rows > cols:
+        factor = 20.0 / rows
+        rows = 20
+        cols = int(round(cols * factor))
+        gray = cv2.resize(gray, (cols, rows))
+    else:
+        factor = 20.0 / cols
+        cols = 20
+        rows = int(round(rows * factor))
+        gray = cv2.resize(gray, (cols, rows))
 
-    with col1:
-        resized_img = image.resize((150, 150))
-        st.image(resized_img, caption='Uploaded Image (Resized)', use_column_width=True)
+    colsPadding = (int(math.ceil((28 - cols) / 2.0)), int(math.floor((28 - cols) / 2.0)))
+    rowsPadding = (int(math.ceil((28 - rows) / 2.0)), int(math.floor((28 - rows) / 2.0)))
+    gray = np.lib.pad(gray, (rowsPadding, colsPadding), 'constant')
 
-    with col2:
-        st.write("")
-        if st.button('Classify', key='classify_btn'):
-            try:
-                # Preprocess the uploaded image
-                img_array = preprocess_image(uploaded_image)
+    shiftx, shifty = getBestShift(gray)
+    shifted = shift(gray, shiftx, shifty)
+    gray = shifted
 
-                # Make a prediction using the pre-trained model
-                result = model.predict(img_array)
-                predicted_class = np.argmax(result)
+    img = gray / 255.0
+    img = np.array(img).reshape(-1, 28, 28, 1)
+    out = str(np.argmax(model.predict(img)))
+    return out
 
-                st.success(f'Predicted Digit: {predicted_class}')
-            except Exception as e:
-                st.error(f'Error: {e}')
+# Пример использования функции для распознавания цифр
+image_path = 'path_to_your_image.jpg'  # Укажите путь к вашему изображению с цифрой
+
+# Распознавание цифры
+predicted_digit = rec_digit(image_path)
+print(f'Predicted Digit: {predicted_digit}')
