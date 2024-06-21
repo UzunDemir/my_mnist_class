@@ -1,39 +1,43 @@
-# app.py
 import streamlit as st
 import numpy as np
 import tensorflow as tf
+from PIL import Image
 
-# Загрузка обученной модели
+# Load the pre-trained model
 model = tf.keras.models.load_model('mnist_cnn_model.h5')
 
-# Функция для предсказания с помощью модели
-def predict(image):
-    # Предобработка изображения (нормализация и изменение размера)
-    img = np.reshape(image.astype(np.float32) / 255.0, (1, 28, 28, 1))
-    # Предсказание класса
-    prediction = model.predict(img)
-    # Возвращаем предсказанный класс (цифру от 0 до 9)
-    return np.argmax(prediction)
+# Function to preprocess the uploaded image
+def preprocess_image(image):
+    img = Image.open(image)
+    img = img.resize((28, 28))
+    img_array = np.array(img) / 255.0
+    img_array = img_array.reshape((1, 28, 28, 1))
+    return img_array
 
-# Основной код Streamlit
-def main():
-    st.title('Распознавание рукописных цифр (MNIST)')
-    
-    # Заголовок и описание
-    st.markdown('Загрузите изображение рукописной цифры (черно-белое, 28x28 пикселей)')
-    
-    # Загрузка изображения
-    uploaded_file = st.file_uploader("Выберите изображение...", type=["jpg", "png", "jpeg"])
+# Streamlit App
+st.title('MNIST Digit Classifier')
 
-    if uploaded_file is not None:
-        # Отображение изображения
-        image = np.array(Image.open(uploaded_file))
-        st.image(image, caption='Загруженное изображение', use_column_width=True)
-        
-        # Предсказание по загруженному изображению
-        prediction = predict(image)
-        
-        st.success(f'Предсказанная цифра: {prediction}')
+uploaded_image = st.file_uploader("Upload a digit image (MNIST format)", type=["jpg", "jpeg", "png"])
 
-if __name__ == '__main__':
-    main()
+if uploaded_image is not None:
+    image = Image.open(uploaded_image)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        resized_img = image.resize((150, 150))
+        st.image(resized_img, caption='Uploaded Image (Resized)', use_column_width=True)
+
+    with col2:
+        st.write("")
+        if st.button('Classify', key='classify_btn'):
+            try:
+                # Preprocess the uploaded image
+                img_array = preprocess_image(uploaded_image)
+
+                # Make a prediction using the pre-trained model
+                result = model.predict(img_array)
+                predicted_class = np.argmax(result)
+
+                st.success(f'Predicted Digit: {predicted_class}')
+            except Exception as e:
+                st.error(f'Error: {e}')
