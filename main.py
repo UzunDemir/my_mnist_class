@@ -21,10 +21,14 @@ st.title('Классификатор рукописных цифр MNIST')
 
 uploaded_image = st.file_uploader("Загрузите изображение цифры (формат MNIST)", type=["jpg", "jpeg", "png"])
 
+# if uploaded_image is not None:
+#     try:
+#         # Предобработка загруженного изображения
+#         user_image, img_array = preprocess_image(uploaded_image)
 if uploaded_image is not None:
-    try:
-        # Предобработка загруженного изображения
-        user_image, img_array = preprocess_image(uploaded_image)
+            # Preprocessed the data like the example
+            user_image = Image.open(uploaded_image)
+            fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(10, 6))
 
         # Отображение обработанных изображений с помощью Matplotlib
         fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(10, 6))
