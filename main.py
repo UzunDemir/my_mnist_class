@@ -4,7 +4,7 @@ import tensorflow as tf
 from PIL import Image
 
 # Load the pre-trained model
-model = tf.keras.models.load_model('mnist_cnn_model.h5')
+model = tf.keras.models.load_model('mnist_cnn_model_1.h5')
 
 # Function to preprocess the uploaded image
 def preprocess_image(image):
