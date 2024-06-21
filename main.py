@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+import matplotlib.pyplot as plt
 
 # Load the pre-trained model
 model = tf.keras.models.load_model('mnist_cnn_model.h5')
@@ -13,7 +14,7 @@ def preprocess_image(image):
     img = img.resize((28, 28))  # Resize to 28x28
     img_array = np.array(img) / 255.0  # Convert to numpy array and normalize
     img_array = img_array.reshape((1, 28, 28, 1))  # Reshape for CNN model
-    return img_array
+    return img, img_array
 
 # Streamlit App
 st.title('MNIST Digit Classifier')
@@ -21,24 +22,54 @@ st.title('MNIST Digit Classifier')
 uploaded_image = st.file_uploader("Upload a digit image (MNIST format)", type=["jpg", "jpeg", "png"])
 
 if uploaded_image is not None:
-    image = Image.open(uploaded_image)
-    col1, col2 = st.columns(2)
+    try:
+        # Preprocess the uploaded image
+        user_image, img_array = preprocess_image(uploaded_image)
 
-    with col1:
-        resized_img = image.resize((150, 150))
-        st.image(resized_img, caption='Uploaded Image (Resized)', use_column_width=True)
+        # Display the processed images
+        fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(10, 6))
 
-    with col2:
-        st.write("")
-        if st.button('Classify', key='classify_btn'):
-            try:
-                # Preprocess the uploaded image
-                img_array = preprocess_image(uploaded_image)
+        # Hide the ticks
+        for axis in ax.flat:
+            axis.set_xticks([])
+            axis.set_yticks([])
 
-                # Make a prediction using the pre-trained model
-                result = model.predict(img_array)
-                predicted_class = np.argmax(result)
+        # Original Image
+        ax[0, 0].set_title("Original Image")
+        ax[0, 0].imshow(user_image)
 
-                st.success(f'Predicted Digit: {predicted_class}')
-            except Exception as e:
-                st.error(f'Error: {e}')
+        # Resized Image (28 * 28)
+        resized_image = user_image.resize((28, 28))
+        ax[0, 1].set_title("Resized Image")
+        ax[0, 1].imshow(resized_image)
+
+        # Grayscale Image
+        grayscaled_image = resized_image.convert("L")
+        ax[0, 2].set_title("Grayscaled Image")
+        ax[0, 2].imshow(grayscaled_image, cmap="gray")
+
+        # Invert the image (so the text is white, and background is black)
+        inverted_image = 255 - np.array(grayscaled_image)
+        ax[1, 0].set_title("Inverted Image")
+        ax[1, 0].imshow(inverted_image, cmap="gray")
+
+        # Normalize the image (divided by 255 to make them between 0 - 1)
+        normalized_image = inverted_image / 255.0
+        ax[1, 1].set_title("Normalized Image")
+        ax[1, 1].imshow(normalized_image, cmap="gray")
+
+        # Reshaped image
+        reshaped_image = normalized_image.reshape((28, 28))
+        ax[1, 2].set_title("Reshaped Image")
+        ax[1, 2].imshow(reshaped_image, cmap="gray")
+
+        st.pyplot(fig)
+
+        # Make a prediction using the pre-trained model
+        result = model.predict(img_array)
+        predicted_class = np.argmax(result)
+
+        st.success(f'Predicted Digit: {predicted_class}')
+        
+    except Exception as e:
+        st.error(f'Error: {e}')
