@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import tensorflow as tf
 from PIL import Image
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # Load the pre-trained model
 model = tf.keras.models.load_model('mnist_cnn_model.h5')
@@ -63,7 +63,7 @@ if uploaded_image is not None:
         ax[1, 2].set_title("Reshaped Image")
         ax[1, 2].imshow(reshaped_image, cmap="gray")
 
-        #st.pyplot(fig)
+        st.pyplot(fig)
 
         # Make a prediction using the pre-trained model
         result = model.predict(img_array)
