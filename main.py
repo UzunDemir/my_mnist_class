@@ -9,6 +9,7 @@ model = tf.keras.models.load_model('mnist_cnn_model.h5')
 # Function to preprocess the uploaded image
 def preprocess_image(image):
     img = Image.open(image)
+    img = img.convert('L')  # Convert to grayscale
     img = img.resize((28, 28))
     img_array = np.array(img) / 255.0
     img_array = img_array.reshape((1, 28, 28, 1))
