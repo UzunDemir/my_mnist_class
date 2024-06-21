@@ -1,20 +1,17 @@
 import streamlit as st
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.models import load_model
 from PIL import Image
-import matplotlib.pyplot as plt
-import math
 
 # Load the pre-trained model
-model = load_model('mnist_cnn_model.h5')
+model = tf.keras.models.load_model('mnist_cnn_model.h5')
 
 # Function to preprocess the uploaded image
 def preprocess_image(image):
-    img = image.convert('L')  # Convert image to grayscale
-    img = img.resize((28, 28))  # Resize image to 28x28 pixels
-    img_array = np.array(img) / 255.0  # Normalize the image
-    img_array = img_array.reshape((1, 28, 28, 1))  # Reshape for model input
+    img = Image.open(image)
+    img = img.resize((28, 28))
+    img_array = np.array(img) / 255.0
+    img_array = img_array.reshape((1, 28, 28, 1))
     return img_array
 
 # Streamlit App
@@ -35,7 +32,7 @@ if uploaded_image is not None:
         if st.button('Classify', key='classify_btn'):
             try:
                 # Preprocess the uploaded image
-                img_array = preprocess_image(image)
+                img_array = preprocess_image(uploaded_image)
 
                 # Make a prediction using the pre-trained model
                 result = model.predict(img_array)
