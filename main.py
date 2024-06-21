@@ -35,8 +35,10 @@ if uploaded_image is not None:
             axis.set_yticks([])
 
         # Исходное изображение
-        ax[0, 0].set_title("Исходное изображение")
-        ax[0, 0].imshow(user_image, cmap='gray')  # Используем cmap='gray' для grayscale изображений
+        ax[0, 0].set_title("Original Image")
+        ax[0, 0].imshow(user_image)
+        # ax[0, 0].set_title("Исходное изображение")
+        # ax[0, 0].imshow(user_image, cmap='gray')  # Используем cmap='gray' для grayscale изображений
 
         # Измененное изображение (28 * 28)
         resized_image = user_image.resize((28, 28))
