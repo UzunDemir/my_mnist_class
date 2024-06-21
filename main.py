@@ -66,7 +66,7 @@ if uploaded_image is not None:
         st.pyplot(fig)
 
         # Make a prediction using the pre-trained model
-        result = model.predict(reshaped_image) #img_array
+        result = model.predict(img_array) #
         predicted_class = np.argmax(result)
 
         st.success(f'Predicted Digit: {predicted_class}')
